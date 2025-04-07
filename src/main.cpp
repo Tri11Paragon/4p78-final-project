@@ -14,16 +14,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include <imgui.h>
 #include <blt/gfx/window.h>
-#include "blt/gfx/renderer/resource_manager.h"
+#include <blt/std/time.h>
 #include "blt/gfx/renderer/batch_2d_renderer.h"
 #include "blt/gfx/renderer/camera.h"
-#include <blt/std/time.h>
-#include <imgui.h>
+#include "blt/gfx/renderer/resource_manager.h"
+#include <string>
 
 #ifdef __EMSCRIPTEN__
-#include <emscripten/fetch.h>
 #include <emscripten.h>
+#include <emscripten/fetch.h>
 #endif
 
 
@@ -35,13 +36,101 @@ blt::gfx::first_person_camera camera;
 std::array<char, 100> buffer;
 size_t last_time_ran = 0;
 
+struct parker_json_t
+{
+    float motorTargetAngle;
+    float position;
+    struct anglePID_t
+    {
+        float setpoint;
+        float input;
+        float output;
+    } anglePID;
+    struct ypr_t
+    {
+        float yaw;
+        float pitch;
+        float roll;
+    } ypr;
+    struct euler_t
+    {
+        float psi;
+        float theta;
+        float phi;
+    } euler;
+    struct gravity_t
+    {
+        float x;
+        float y;
+        float z;
+    } gravity;
+    struct q_t
+    {
+        float x;
+        float y;
+        float z;
+        float w;
+    } q;
+    struct aa_t
+    {
+        float x;
+        float y;
+        float z;
+    } aa;
+    struct gy_t
+    {
+        float x;
+        float y;
+        float z;
+    } gy;
+    struct aaReal_t
+    {
+        float x;
+        float y;
+        float z;
+    } aaReal;
+    struct aaWorld_t
+    {
+        float x;
+        float y;
+        float z;
+    } aaWorld;
+};
+
 void check_for_request()
 {
     const auto cur_time = blt::system::getCurrentTimeMilliseconds();
     if (cur_time - last_time_ran > 250)
     {
         last_time_ran = cur_time;
-        
+        const std::string_view fuck_you{buffer.data()};
+        std::string parker_hates_this{fuck_you};
+        auto cstr = parker_hates_this.c_str();
+        parker_json_t data{};
+        EM_ASM(
+            {
+                const v = await fetch('http://$0/get_stuff', {
+                    'credentials': 'omit',
+                    'headers': {
+                        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0',
+                        'Accept': '/',
+                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Priority': 'u=4'
+                    },
+                    'method': 'GET',
+                    'mode': 'cors'
+                });
+                if (!v.ok) {
+                    return v.status;
+                }
+
+                const j = await v.json();
+                const floatArray = j.values;
+                Module.HEAPF32.set(floatArray, $1 >> 2);
+            },
+            cstr,
+            reinterpret_cast<float*>(&data)
+        );
     }
 }
 
