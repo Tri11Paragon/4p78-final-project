@@ -11,13 +11,13 @@ double turnKp=1, turnKi=5.0, turnKd=0.17;
 
 
 double angleInput, angleOutput, angleSetpoint;
-PID anglePID(&angleInput, &angleOutput, &angleSetpoint, angKp, angKi, angKd, AUTOMATIC);
+PID anglePID(&angleInput, &angleOutput, &angleSetpoint, angKp, angKi, angKd, P_ON_M, REVERSE);
 
 double posInput, posOutput, posSetpoint;
-PID posPID(&posInput, &posOutput, &posSetpoint, posKp, posKi, posKd, AUTOMATIC);
+PID posPID(&posInput, &posOutput, &posSetpoint, posKp, posKi, posKd, P_ON_E, DIRECT);
 
 double turnInput, turnOutput, turnSetpoint;
-PID turnPID(&turnInput, &turnOutput, &turnSetpoint, turnKp, turnKi, turnKd, AUTOMATIC);
+PID turnPID(&turnInput, &turnOutput, &turnSetpoint, turnKp, turnKi, turnKd, P_ON_E, REVERSE);
 
 PID* pids[] = {&anglePID, &posPID, &turnPID};
 

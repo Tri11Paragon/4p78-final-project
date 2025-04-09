@@ -78,7 +78,8 @@ void initServer(){
     char buff[1024];
     int ret = snprintf(buff, sizeof(buff), 
       R"({
-        "motorTargetAngle": %d,
+        "motorTargetAngle": %f,
+        "distanceReading": %f,
         "position": %f,
         "anglePID": {"setpoint": %lf, "input": %lf, "output": %lf},
         "posPID": {"setpoint": %lf, "input": %lf, "output": %lf},
@@ -92,7 +93,8 @@ void initServer(){
         "aaReal": {"x": %hd, "y": %hd, "z": %hd},
         "aaWorld": {"x": %hd, "y": %hd, "z": %hd}
       })",
-      dbgState.motorTargetAngle, 
+      (float)dbgState.motorTargetAngle, 
+      (float)distanceReading,
       encoder.position(),
       angleSetpoint, angleInput, angleOutput,
       posSetpoint, posInput, posOutput,
