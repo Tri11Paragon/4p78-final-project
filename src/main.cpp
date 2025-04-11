@@ -36,77 +36,24 @@ blt::gfx::first_person_camera camera;
 std::array<char, 100> buffer;
 size_t last_time_ran = 0;
 
-struct parker_json_t
+struct everything_t
 {
-	float motorTargetAngle;
-	float position;
-
-	struct anglePID_t
-	{
-		float setpoint;
-		float input;
-		float output;
-	} anglePID;
-
-	struct ypr_t
-	{
-		float yaw;
-		float pitch;
-		float roll;
-	} ypr;
-
-	struct euler_t
-	{
-		float psi;
-		float theta;
-		float phi;
-	} euler;
-
-	struct gravity_t
-	{
-		float x;
-		float y;
-		float z;
-	} gravity;
-
-	struct q_t
-	{
-		float x;
-		float y;
-		float z;
-		float w;
-	} q;
-
-	struct aa_t
-	{
-		float x;
-		float y;
-		float z;
-	} aa;
-
-	struct gy_t
-	{
-		float x;
-		float y;
-		float z;
-	} gy;
-
-	struct aaReal_t
-	{
-		float x;
-		float y;
-		float z;
-	} aaReal;
-
-	struct aaWorld_t
-	{
-		float x;
-		float y;
-		float z;
-	} aaWorld;
+	float motorTargetAngle = 0;
+	float distance_reading = 0;
+	float position = 0;
+	blt::vec3f anglePID;
+	blt::vec3f posPID;
+	blt::vec3f ypr;
+	blt::vec3f euler;
+	blt::vec3f gravity;
+	blt::vec4f q;
+	blt::vec3f aa;
+	blt::vec3f gy;
+	blt::vec3f aaReal;
+	blt::vec3f aaWorld;
 };
 
-
+blt::vec2 current_position;
 
 void check_for_request()
 {
@@ -114,18 +61,22 @@ void check_for_request()
 	if (cur_time - last_time_ran > 250)
 	{
 		last_time_ran = cur_time;
-		const std::string_view fuck_you{buffer.data()};
-		std::string parker_hates_this{fuck_you};
-		auto cstr = parker_hates_this.c_str();
-		parker_json_t data{};
+		const std::string_view bad_code{buffer.data()};
+		const std::string this_is_terrible{bad_code};
+		const auto result = blt::requests::send_get_request("http://" + this_is_terrible + "/get_stuff_bin");
+		if (result.size() != sizeof(everything_t))
+		{
+			BLT_WARN("Size of string from ESP32 ({}) doesn't match the size of the struct ({})", result.size(), sizeof(everything_t));
+			return;
+		}
+		everything_t data;
+		std::memcpy(&data, result.data(), sizeof(everything_t));
 	}
 }
 
 void init(const blt::gfx::window_data&)
 {
 	using namespace blt::gfx;
-
-	BLT_TRACE("{}", blt::requests::send_get_request("https://tpgc.me/"));
 
 	global_matrices.create_internals();
 	resources.load_resources();
@@ -139,8 +90,6 @@ void update(const blt::gfx::window_data& data)
 	camera.update();
 	camera.update_view(global_matrices);
 	global_matrices.update();
-
-
 
 	ImGui::SetNextWindowSize(ImVec2(300, static_cast<float>(data.height)));
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
