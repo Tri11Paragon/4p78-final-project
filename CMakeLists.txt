@@ -49,7 +49,7 @@ macro(blt_add_project name source type)
     project(4p78-final-project)
 endmacro()
 
-project(4p78-final-project VERSION 0.0.5)
+project(4p78-final-project VERSION 0.0.6)
 
 option(ENABLE_ADDRSAN "Enable the address sanitizer" OFF)
 option(ENABLE_UBSAN "Enable the ub sanitizer" OFF)
@@ -62,6 +62,7 @@ set(CMAKE_CXX_STANDARD 17)
 add_subdirectory(lib/blt-with-graphics)
 
 include_directories(include/)
+
 file(GLOB_RECURSE PROJECT_BUILD_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 
 add_executable(4p78-final-project ${PROJECT_BUILD_FILES})
@@ -69,6 +70,10 @@ add_executable(4p78-final-project ${PROJECT_BUILD_FILES})
 compile_options(4p78-final-project)
 
 target_link_libraries(4p78-final-project PRIVATE BLT_WITH_GRAPHICS)
+
+if (EMSCRIPTEN)
+    include(lib/blt-with-graphics/cmake/link_flags.cmake)
+endif ()
 
 if (${BUILD_4P78_FINAL_PROJECT_EXAMPLES})
 

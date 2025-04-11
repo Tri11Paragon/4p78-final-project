@@ -21,6 +21,7 @@
 #include "blt/gfx/renderer/camera.h"
 #include "blt/gfx/renderer/resource_manager.h"
 #include <string>
+#include <blt/std/requests.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -105,21 +106,7 @@ struct parker_json_t
 	} aaWorld;
 };
 
-std::string send_get_request(const std::string& url)
-{
-	#ifdef __EMSCRIPTEN__
-	auto* str = static_cast<char*>(EM_ASM_PTR(
-		{ const v = await fetch('$0', { 'credentials': 'omit', 'headers': { 'User-Agent':
-			'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0', 'Accept': '/', 'Accept-Language': 'en-US,en;q=0.5', 'Priority':
-			'u=4' }, 'method': 'GET', 'mode': 'cors' }); if (!v.ok) { throw v.status; } return stringToNewUTF8(await response.text()); },
-		url.c_str()));
-	std::string str_obj{str};
-	free(str);
-	return str_obj;
-	#else
 
-	#endif
-}
 
 void check_for_request()
 {
@@ -138,6 +125,8 @@ void init(const blt::gfx::window_data&)
 {
 	using namespace blt::gfx;
 
+	BLT_TRACE("{}", blt::requests::send_get_request("https://tpgc.me/"));
+
 	global_matrices.create_internals();
 	resources.load_resources();
 	renderer_2d.create();
@@ -151,7 +140,7 @@ void update(const blt::gfx::window_data& data)
 	camera.update_view(global_matrices);
 	global_matrices.update();
 
-	check_for_request();
+
 
 	ImGui::SetNextWindowSize(ImVec2(300, static_cast<float>(data.height)));
 	ImGui::SetNextWindowPos(ImVec2(0, 0));
