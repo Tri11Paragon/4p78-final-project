@@ -14,14 +14,16 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+#include <deque>
 #include <imgui.h>
+#include <string>
 #include <blt/gfx/window.h>
+#include <blt/gfx/renderer/font_renderer.h>
+#include <blt/std/requests.h>
 #include <blt/std/time.h>
 #include "blt/gfx/renderer/batch_2d_renderer.h"
 #include "blt/gfx/renderer/camera.h"
 #include "blt/gfx/renderer/resource_manager.h"
-#include <string>
-#include <blt/std/requests.h>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
@@ -31,10 +33,12 @@
 blt::gfx::matrix_state_manager global_matrices;
 blt::gfx::resource_manager resources;
 blt::gfx::batch_renderer_2d renderer_2d(resources, global_matrices);
+blt::gfx::font_renderer_t fr2d{};
 blt::gfx::first_person_camera_2d camera;
 
 std::array<char, 100> buffer;
 size_t last_time_ran = 0;
+size_t last_time_ran1 = 0;
 
 bool ready = false;
 
@@ -66,12 +70,30 @@ blt::vec2 current_position;
 
 struct boy_trust_t
 {
-	std::vector<blt::vec2f> point_cloud;
+	std::deque<blt::vec2f> point_cloud;
 	std::vector<blt::gfx::line2d_t> lines;
 
-	void consolidate(blt::u64 run_time)
+	void consolidate(const blt::u64 run_time)
 	{
-
+		const auto cur_time = blt::system::getCurrentTimeMilliseconds();
+		if (cur_time - last_time_ran1 > run_time)
+		{
+			last_time_ran1 = cur_time;
+			// constexpr float min_dist = 5;
+			// for (auto [i, a] : enumerate(point_cloud))
+			// {
+			// 	for (auto [j, b] : enumerate(point_cloud))
+			// 	{
+			// 		if (i == j)
+			// 			continue;
+			// 		auto diff = (a - b).abs();
+			// 		if (diff.x() < min_dist && diff.y() < min_dist)
+			// 		{
+			//
+			// 		}
+			// 	}
+			// }
+		}
 	}
 } point_data;
 
@@ -96,6 +118,7 @@ bool check_for_request(needed_t& data)
 		}
 		std::memcpy(&data, result.data(), sizeof(needed_t));
 		data.position *= 25.4;
+		data.yaw = static_cast<float>(2 * blt::PI) - data.yaw;
 		// blt::mem::fromBytes<true>(result.data(), data.yaw);
 		// blt::mem::fromBytes<true>(result.data() + sizeof(float), data.distance);
 		// blt::mem::fromBytes<true>(result.data() + sizeof(float) * 2, data.position);
@@ -126,6 +149,7 @@ void init(const blt::gfx::window_data&)
 	global_matrices.create_internals();
 	resources.load_resources();
 	renderer_2d.create();
+	fr2d.create_default(250, 2048);
 }
 
 void update(const blt::gfx::window_data& data)
@@ -158,11 +182,19 @@ void update(const blt::gfx::window_data& data)
 	}
 	ImGui::End();
 
-	needed_t robot_data;
+	static needed_t robot_data;
 	if (check_for_request(robot_data))
 	{
 		handle_data(robot_data);
 	}
+	renderer_2d.drawPoint(blt::gfx::point2d_t{robot_data.position, 35}, blt::make_color(0, 0, 1), 3);
+	renderer_2d.drawLine(blt::gfx::line2d_t{robot_data.position, {0, 0}}, blt::make_color(0, 0, 1), 2);
+	fr2d.render_text("Yaw " + std::to_string(robot_data.yaw), 32).setPosition(robot_data.position + blt::vec2{10, 0});
+
+	blt::vec2f current_position;
+	current_position[0] = robot_data.position[0] + 100 * std::cos(robot_data.yaw);
+	current_position[1] = robot_data.position[1] + 100 * std::sin(robot_data.yaw);
+	renderer_2d.drawLine(blt::gfx::line2d_t{robot_data.position, current_position}, blt::make_color(1, 0, 0), 2);
 
 	for (const auto& point_cloud : point_data.point_cloud)
 		renderer_2d.drawPoint(blt::gfx::point2d_t{point_cloud, point_size}, blt::make_color(0, 1, 0), 1);
@@ -170,6 +202,7 @@ void update(const blt::gfx::window_data& data)
 		renderer_2d.drawLine(line, blt::make_color(1, 0, 0), 0);
 
 	renderer_2d.render(data.width, data.height);
+	fr2d.render();
 }
 
 void destroy(const blt::gfx::window_data&)
@@ -177,6 +210,7 @@ void destroy(const blt::gfx::window_data&)
 	global_matrices.cleanup();
 	resources.cleanup();
 	renderer_2d.cleanup();
+	fr2d.cleanup();
 	blt::gfx::cleanup();
 }
 
