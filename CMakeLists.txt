@@ -49,7 +49,7 @@ macro(blt_add_project name source type)
     project(4p78-final-project)
 endmacro()
 
-project(4p78-final-project VERSION 0.0.6)
+project(4p78-final-project VERSION 0.0.7)
 
 option(ENABLE_ADDRSAN "Enable the address sanitizer" OFF)
 option(ENABLE_UBSAN "Enable the ub sanitizer" OFF)
