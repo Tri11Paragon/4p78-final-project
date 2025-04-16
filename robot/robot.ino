@@ -1,5 +1,16 @@
 
-#include "I2Cdev.h"
+
+#include "headers.h"
+
+void wire1(){
+  Wire1.begin(SDA, SCL);
+  Wire1.setClock(400000);
+}
+
+void wire2(){
+  Wire1.begin(D7, D5);
+  Wire2.setClock(400000);
+}
 
 
 #include <Servo.h>
@@ -10,18 +21,9 @@ float angleOffset = -2.4241745;
 float desiredYaw = 0.0;
 float currentYaw = 0.0;
 
-struct DebugState{
-  int motorTargetAngle;
-};
+FVec2 desiredPos;
 
 DebugState dbgState;
-
-#include "distance.h"
-#include "encoder.h"
-#include "gyro.h"
-#include "pid.h"
-#include "webserver.h"
-
 
 void initSerial(){
   Serial.begin(115200);
@@ -36,11 +38,10 @@ void initMotors(){
 }
 
 void initI2C(){
-  digitalWrite(D2, LOW);
-  digitalWrite(D1, LOW);
-  delay(100);
-  Wire.begin();
-  Wire.setClock(400000);
+  delay(100);  
+
+  wire2();
+  wire1();
 }
 
 void setup() {
@@ -50,23 +51,24 @@ void setup() {
   initMotors();
   initPID();
   initI2C();
-  initEncoder();
   initDistance();
-  initGyro();
+  initGyro();  
+  initEncoder();
 }
 
 void loop() {
+  long start = millis();
+  
   if (updateGyro()) { //gyro data
-    currentYaw=ypr[0]*180/M_PI;
     double angle = ypr[1] * 180 / M_PI;
     if(angle>180) 
       angle -= 180;
     angleInput = angle + angleOffset;
   }
-  {// encoder data
-    updateEncoder();
-    posInput = encoder.position();
-  }
+  
+  updateEncoder();
+  currentYaw=odom.angle*180/M_PI;
+  
   updateDistance();
 
   
@@ -76,6 +78,13 @@ void loop() {
   speeds.right = min(90.0f-10, max(-90.0f+10, speeds.right));
   left.write(90+(int)speeds.left);
   right.write(90+(int)speeds.right);
+
+  long end = millis();
   
-  delay(5);
+  if(end-start>LOOP_INTERVAL_MS){
+    Serial.print("Overran ");
+    Serial.println(end-start);
+  }else{
+    delay(LOOP_INTERVAL_MS-(end-start)); 
+  }
 }

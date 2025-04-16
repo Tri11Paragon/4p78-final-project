@@ -1,12 +1,8 @@
+#include "headers.h"
 #include "MPU6050_6Axis_MotionApps612.h"
 //#include "MPU6050.h" // not necessary if using MotionApps include file
 
-
-#if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
-#include "Wire.h"
-#endif
-
-MPU6050 mpu;
+MPU6050 mpu(MPU6050_ADDRESS_AD0_LOW, &Wire1);
 
 // MPU control/status vars
 bool dmpReady = false;  // set true if DMP init was successful
@@ -53,6 +49,8 @@ void initGyro(){
   // load and configure the DMP
   Serial.println(F("Initializing DMP..."));
   devStatus = mpu.dmpInitialize();
+
+//  mpu.setRate(0);
 
   // supply your own gyro offsets here, scaled for min sensitivity
 
@@ -102,17 +100,15 @@ void initGyro(){
 bool updateGyro(){
   if (!dmpReady) return false;
   if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) {
-//    Xf = 1/4*(aaRealLast.x + aaReal.x)t^2 + Vot + Xo
-//    aaRealLast = aaReal;
     
     mpu.dmpGetQuaternion(&q, fifoBuffer);
-    mpu.dmpGetAccel(&aa, fifoBuffer);
-    mpu.dmpGetGyro(&gy, fifoBuffer);
+//    mpu.dmpGetAccel(&aa, fifoBuffer);
+//    mpu.dmpGetGyro(&gy, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &q);
     mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-    mpu.dmpGetEuler(euler, &q);
-    mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
-    mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+//    mpu.dmpGetEuler(euler, &q);
+//    mpu.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+//    mpu.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
 
     return true;
   }

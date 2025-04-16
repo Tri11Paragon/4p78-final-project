@@ -1,3 +1,4 @@
+#include "headers.h"
 #include <PID_v1.h>
 
 //double angKp=3.5, angKi=80, angKd=0.042;
@@ -17,9 +18,9 @@ double posInput, posOutput, posSetpoint;
 PID posPID(&posInput, &posOutput, &posSetpoint, posKp, posKi, posKd, P_ON_E, DIRECT);
 
 double turnInput, turnOutput, turnSetpoint;
-PID turnPID(&turnInput, &turnOutput, &turnSetpoint, turnKp, turnKi, turnKd, P_ON_E, REVERSE);
+PID turnPID(&turnInput, &turnOutput, &turnSetpoint, turnKp, turnKi, turnKd, P_ON_E, DIRECT);
 
-PID* pids[] = {&anglePID, &posPID, &turnPID};
+PID* pids[PID_ARR_COUNT] = {&anglePID, &posPID, &turnPID};
 
 void initPID(){
   angleSetpoint = 0;
@@ -39,11 +40,7 @@ void initPID(){
   turnPID.SetSampleTime(5);
 }
 
-struct Speeds{
-  float left;
-  float right;
-};
-  
+
 Speeds updatePID(){
   posPID.Compute();
   angleSetpoint = posOutput;
@@ -51,8 +48,8 @@ Speeds updatePID(){
 
   float maxTurn = max(0.0f, 15.0f-abs((float)angleOutput));
   turnPID.SetOutputLimits(-maxTurn, maxTurn);
-  turnSetpoint = desiredYaw;
-  turnInput = currentYaw;
+  turnSetpoint = 0;
+  turnInput = fmod(currentYaw-desiredYaw, 180);
   turnPID.Compute();
 
   Speeds speeds;

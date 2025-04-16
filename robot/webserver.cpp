@@ -1,3 +1,5 @@
+#include "headers.h"
+
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
@@ -31,48 +33,31 @@ void initWifi(bool host){
   Serial.println(WiFi.localIP());
 }
 
-struct FVec3{
-  float x,y,z;
-};
-struct FVec4{
-  float x,y,z;
-};
-
-struct Everything{
-  float motorTargetAngle;
-  float position;
-  FVec3 anglePID;
-  FVec3 posPID;
-  FVec3 ypr;
-  FVec3 euler;
-  FVec3 gravity;
-  FVec4 q;
-  FVec3 aa;
-  FVec3 gy;
-  FVec3 aaReal;
-  FVec3 aaWorld;
-};
 
 void initServer(){
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send_P(200, "text/html", index_html);
   });
   server.on("/get_stuff_bin", HTTP_GET, [](AsyncWebServerRequest *request){
+    static float arr[4];
+    arr[0] = odom.angle;
+    arr[1] = distanceReading;
+    arr[2] = odom.x;
+    arr[3] = odom.y;
+    request->send(200, "application/octet-stream", (uint8_t*)(const char*)arr, sizeof(arr));
+  });
+  server.on("/fuckyou", HTTP_GET, [](AsyncWebServerRequest *request){
     float arr[] = {
-      dbgState.motorTargetAngle, 
-      encoder.position(),
-      angleSetpoint, angleInput, angleOutput,
-      posSetpoint, posInput, posOutput,
-      ypr[0]*180/M_PI, ypr[1]*180/M_PI, ypr[2]*180/M_PI, 
-      euler[0]*180/M_PI, euler[1]*180/M_PI, euler[2]*180/M_PI, 
-      gravity.x, gravity.y, gravity.z,
-      q.w, q.x, q.y, q.z,
-      aa.x, aa.y, aa.z,
-      gy.x, gy.y, gy.z,
-      aaReal.x, aaReal.y, aaReal.z,
-      aaWorld.x, aaWorld.y, aaWorld.z
+      odom.angle,
+      distanceReading,
+      odom.x,
+      odom.y
     };
-    request->send(200, "application/text", (const uint8_t*)arr, sizeof(arr)*4);
+    request->send(200, "application/text", "hello");
+  });
+  server.on("/zero", HTTP_GET, [](AsyncWebServerRequest *request){
+    zeroOdom();
+    request->send(200);
   });
   server.on("/get_stuff", HTTP_GET, [](AsyncWebServerRequest *request){
     char buff[1024];
@@ -84,6 +69,7 @@ void initServer(){
         "anglePID": {"setpoint": %lf, "input": %lf, "output": %lf},
         "posPID": {"setpoint": %lf, "input": %lf, "output": %lf},
         "turnPID": {"setpoint": %lf, "input": %lf, "output": %lf},
+        "odom": {"left": %f, "right": %f, "x": %f, "y": %f, "angle": %f},
         "ypr": {"yaw": %f, "pitch": %f, "roll": %f},
         "euler": {"psi": %f, "theta": %f, "phi": %f},
         "gravity": {"x": %f, "y": %f, "z": %f},
@@ -95,10 +81,11 @@ void initServer(){
       })",
       (float)dbgState.motorTargetAngle, 
       (float)distanceReading,
-      encoder.position(),
+      0.0, //encoder.position(),
       angleSetpoint, angleInput, angleOutput,
       posSetpoint, posInput, posOutput,
       turnSetpoint, turnInput, turnOutput,
+      odom.left, odom.right, odom.x, odom.y, odom.angle,
       ypr[0]*180/M_PI, ypr[1]*180/M_PI, ypr[2]*180/M_PI, 
       euler[0]*180/M_PI, euler[1]*180/M_PI, euler[2]*180/M_PI, 
       gravity.x, gravity.y, gravity.z,
