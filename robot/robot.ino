@@ -17,7 +17,7 @@ void wire2(){
 Servo left;
 Servo right;
 
-float angleOffset = -2.4241745;
+float angleOffset = 4.620817395210266;
 float desiredYaw = 0.0;
 float currentYaw = 0.0;
 
@@ -63,14 +63,14 @@ void loop() {
     double angle = ypr[1] * 180 / M_PI;
     if(angle>180) 
       angle -= 180;
-    angleInput = angle + angleOffset;
+    angleInput = angle - angleOffset;
   }
   
   updateEncoder();
   currentYaw=odom.angle*180/M_PI;
   
   updateDistance();
-
+  updateServer();
   
   Speeds speeds = updatePID();
 

@@ -42,8 +42,9 @@ void initEncoder(){
 }
 
 void updateEncoder(){
-  #define WHEEL_CIRCUM (2*PI*4.0625)
-  #define WHEEL_DISTANCE (7 + 12.0/16.0)
+  #define WHEEL_CIRCUM (PI*4.256)
+//  #define WHEEL_CIRCUM (1.0)
+  #define WHEEL_DISTANCE (8-0.125)
 
   wire2();
   int rawL = as5600_0.getCumulativePosition();
@@ -61,18 +62,16 @@ void updateEncoder(){
 
   float displacement = (d_left + d_right)/2;
   float oldAng = odom.angle;
-  odom.angle += (d_left-d_right)/(2*WHEEL_DISTANCE);
+  odom.angle += (d_left-d_right)/(WHEEL_DISTANCE);
   float ang = (odom.angle+oldAng)/2;
 
-  float dispx = odom.x-desiredPos.x;
-  float dispy = odom.y-desiredPos.y;
+  float dispx = desiredPos.x-odom.x;
+  float dispy = desiredPos.y-odom.y;
   posInput = sqrt(dispx*dispx+dispy*dispy);
 
   desiredYaw = atan2(dispy, dispx)*180/PI;
-  if(abs(fmod(desiredYaw-currentYaw, 180.0))<90){
+  if(abs(fmod(currentYaw-desiredYaw, 180.0))>90){
     desiredYaw = fmod(desiredYaw+180.0, 360.0);
-    if(desiredYaw>180)desiredYaw-=180.0;
-
     posInput = -posInput;
   }
 //  Serial.println(desiredYaw);

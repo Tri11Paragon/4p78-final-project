@@ -112,3 +112,4 @@ void initPID();
 
 void initWifi(bool host);
 void initServer();
+void updateServer();
