@@ -1,5 +1,5 @@
 
-#define LOOP_INTERVAL_MS 20
+#define LOOP_INTERVAL_MS 10
 
 struct FVec2{
   float x,y;

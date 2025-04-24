@@ -81,9 +81,8 @@ public class PidPanel extends JPanel {
         this.add(buttonRow);
 
         getPidButton.addActionListener(e -> {
-            try {
-                int index = indexDropdown.getSelectedIndex();
-                Robot.PID pid = robot.getPID(index);
+            int index = indexDropdown.getSelectedIndex();
+            robot.getPID(index).then(pid -> {
                 kpSlider.setValue((int) (pid.kp() * SCALE));
                 kiSlider.setValue((int) (pid.ki() * SCALE));
                 kdSlider.setValue((int) (pid.kd() * SCALE));
@@ -92,25 +91,23 @@ public class PidPanel extends JPanel {
                 } else {
                     reverseButton.setSelected(true);
                 }
-            } catch (Exception ex) {
+            }).error(ex -> {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Failed to get PID: " + ex.getMessage());
-            }
+            });
         });
 
         setPidButton.addActionListener(e -> {
-            try {
-                int index = indexDropdown.getSelectedIndex();
-                float kp = (float) (kpSlider.getValue() / SCALE);
-                float ki = (float) (kiSlider.getValue() / SCALE);
-                float kd = (float) (kdSlider.getValue() / SCALE);
-                int direction = directButton.isSelected() ? 0 : 1;
+            int index = indexDropdown.getSelectedIndex();
+            float kp = (float) (kpSlider.getValue() / SCALE);
+            float ki = (float) (kiSlider.getValue() / SCALE);
+            float kd = (float) (kdSlider.getValue() / SCALE);
+            int direction = directButton.isSelected() ? 0 : 1;
 
-                robot.setPID(index, kp, ki, kd, direction);
-            } catch (Exception ex) {
+            robot.setPID(index, kp, ki, kd, direction).error(ex -> {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, "Failed to set PID: " + ex.getMessage());
-            }
+            });
         });
         getPidButton.doClick();
         indexDropdown.addActionListener(a -> {

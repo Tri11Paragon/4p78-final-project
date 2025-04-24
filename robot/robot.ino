@@ -1,6 +1,5 @@
-
-
 #include "headers.h"
+#define PWM_FREQ 400
 
 void wire1(){
   Wire1.begin(SDA, SCL);
@@ -12,12 +11,7 @@ void wire2(){
   Wire2.setClock(400000);
 }
 
-
-#include <Servo.h>
-Servo left;
-Servo right;
-
-float angleOffset = 4.620817395210266;
+float angleOffset = 2.5033416018486023;
 float desiredYaw = 0.0;
 float currentYaw = 0.0;
 
@@ -33,8 +27,10 @@ void initSerial(){
 }
 
 void initMotors(){
-  left.attach(D3);
-  right.attach(D4);
+  pinMode(D3, OUTPUT);
+  pinMode(D4, OUTPUT);
+  
+  analogWriteFreq(PWM_FREQ);
 }
 
 void initI2C(){
@@ -46,14 +42,16 @@ void initI2C(){
 
 void setup() {
   initSerial();
-  initWifi(false);
-  initServer();
   initMotors();
   initPID();
   initI2C();
   initDistance();
-  initGyro();  
   initEncoder();
+  
+  initWifi(true);
+  initServer();
+  
+  initGyro();  
 }
 
 void loop() {
@@ -65,25 +63,48 @@ void loop() {
       angle -= 180;
     angleInput = angle - angleOffset;
   }
+  long gyro = millis();
   
   updateEncoder();
-  currentYaw=odom.angle*180/M_PI;
+  
+  long encoder = millis();
   
   updateDistance();
+  
+  long distance = millis();
+  
   updateServer();
   
+  long server = millis();
+  
   Speeds speeds = updatePID();
+  
+  long pid = millis();
 
   speeds.left = min(90.0f-10, max(-90.0f+10, speeds.left));
   speeds.right = min(90.0f-10, max(-90.0f+10, speeds.right));
-  left.write(90+(int)speeds.left);
-  right.write(90+(int)speeds.right);
+
+  const int MAX_FOR = (int)(0.0010/(1.0/PWM_FREQ)*255);
+  const int MAX_REV = (int)(0.0020/(1.0/PWM_FREQ)*255);
+
+  analogWrite(D3, map((int)speeds.left, 90-10, -90+10, MAX_REV, MAX_FOR));
+  analogWrite(D4, map((int)speeds.right, 90-10, -90+10, MAX_REV, MAX_FOR));
 
   long end = millis();
   
   if(end-start>LOOP_INTERVAL_MS){
     Serial.print("Overran ");
-    Serial.println(end-start);
+    Serial.print(gyro-start);
+    Serial.print(" ");
+    Serial.print(encoder-gyro);
+    Serial.print(" ");
+    Serial.print(distance-encoder);
+    Serial.print(" ");
+    Serial.print(server-distance);
+    Serial.print(" ");
+    Serial.print(pid-server);
+    Serial.print(" ");
+    Serial.println(end-pid);
   }else{
     delay(LOOP_INTERVAL_MS-(end-start)); 
   }

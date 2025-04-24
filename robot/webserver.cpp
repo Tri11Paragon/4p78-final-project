@@ -179,6 +179,7 @@ struct SetPIDPacket{
 };
 
 struct Packet{
+  uint32_t sequence;
   uint32_t id;
   union{
     ZeroPacket zero;
@@ -282,16 +283,14 @@ bool handleUDP(){
   constexpr size_t buffer_size = 256;
   alignas(alignof(float)) char buffer[buffer_size];
   
-  if (size>=4){
+  if (size>=8){
     int len = Udp.read(buffer, buffer_size);
 
     Packet* packet = (Packet*)buffer;
 
-    static uint32_t sequence = 0;
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
+    Udp.write((const char*)&packet->sequence, sizeof(packet->sequence));
     Udp.write((const char*)&packet->id, sizeof(packet->id));
-    Udp.write((const char*)&sequence, sizeof(sequence));
-    sequence++;
 
     switch(packet->id){
       case ZeroPacket::ID: 

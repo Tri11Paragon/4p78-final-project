@@ -1,20 +1,24 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 
 public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
     private VisualPanel visualPanel;
     private JButton zeroButton;
+    private JButton averageButton;
     private Robot robot;
+
+    record Pos(double x, double y){}
+    private final ArrayList<Pos> maps = new ArrayList<>();
 
     public Gui() throws SocketException, UnknownHostException {
         robot = new Robot();
 
         setTitle("Wrobot");
-        setSize(600, 600);
+        setSize(1200, 600);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -23,26 +27,16 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
 
         zeroButton = new JButton("Zero");
         zeroButton.addActionListener(e -> {
-            try {
-                robot.sendZero();
-                new Thread(() -> {
-                    var sum = 0.0;
-                    int number = 500;
-                    for(int i = 0; i < number; i ++){
-                        try {
-                            sum += robot.getEverything()[19-1];
-                        } catch (IOException ex) {
-                            throw new RuntimeException(ex);
-                        }
-                    }
-                    System.out.println(sum/number);
-                }).start();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
+            robot.sendZero().error(ex -> ex.printStackTrace());
+            maps.clear();
         });
         zeroButton.setFocusable(false);
         add(zeroButton, BorderLayout.SOUTH);
+
+        averageButton = new JButton("Find Average Angle");
+        averageButton.addActionListener( e -> averageAngle());
+        averageButton.setFocusable(false);
+        add(averageButton, BorderLayout.NORTH);
 
 
         setFocusable(true);
@@ -55,8 +49,7 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
         new Thread(() -> {
             while(true){
                 try{
-                    var data = robot.getDataPlus();
-                    visualPanel.updateData(data);
+                    visualPanel.updateData(robot.getDataPlus().await(1000));
                     Thread.sleep(20);
                 }catch (Exception e){
                     e.printStackTrace();
@@ -64,6 +57,21 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
             }
         }).start();
 
+    }
+
+    public void averageAngle(){
+        new Thread(() -> {
+            var sum = 0.0;
+            int number = 500;
+            for(int i = 0; i < number; i ++){
+                try {
+                    sum += robot.getEverything().await()[19-1];
+                } catch (Exception ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+            System.out.println(sum/number);
+        }).start();
     }
 
 
@@ -77,8 +85,8 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
             case KeyEvent.VK_S -> visualPanel.offsetY -= panStep;
             case KeyEvent.VK_A -> visualPanel.offsetX += panStep;
             case KeyEvent.VK_D -> visualPanel.offsetX -= panStep;
-            case KeyEvent.VK_PLUS, KeyEvent.VK_EQUALS -> visualPanel.zoom *= 1.1;
-            case KeyEvent.VK_MINUS -> visualPanel.zoom /= 1.1;
+            case KeyEvent.VK_PLUS, KeyEvent.VK_EQUALS -> visualPanel.zoom *= 1.1f;
+            case KeyEvent.VK_MINUS -> visualPanel.zoom /= 1.1f;
         }
 
         repaint();
@@ -108,18 +116,21 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
                 public void mouseClicked(MouseEvent e) {
                     Point screenPoint = e.getPoint();
                     float worldX = (screenPoint.x - getWidth() / 2f - offsetX) / zoom;
-                    float worldY = -((screenPoint.y - getHeight() / 2f - offsetY) / zoom);
-                    try {
-                        robot.sendTargetPos(worldX, worldY);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
+                    float worldY = -(screenPoint.y - getHeight() / 2f - offsetY) / zoom;
+                    robot.sendTargetPos(worldX, worldY);
                 }
             });
         }
 
         public void updateData(Robot.DataPacketPlus dpp) {
             this.dpp = dpp;
+            if(dpp.distance()<2500){
+                var x = dpp.x() + 0.0393701*dpp.distance()*Math.cos((dpp.yaw()+90)/180*Math.PI);
+                var y = dpp.y() + 0.0393701*dpp.distance()*Math.sin((dpp.yaw()+90)/180*Math.PI);
+                synchronized (maps){
+                    maps.add(new Pos(x, y));
+                }
+            }
             repaint();
         }
 
@@ -135,25 +146,46 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
             int width = getWidth();
             int height = getHeight();
 
+
+            // Flip back to draw text
+            g.scale(1, 1);
+
             g.setColor(Color.WHITE);
             g.fillRect(0, 0, width, height);
 
             g.translate((double) width / 2 + offsetX, (double) height / 2 + offsetY);
-            g.scale(1, -1); // Y-up
 
-            int px = Math.round(dpp.x() * zoom);
-            int py = Math.round(dpp.y() * zoom);
+            g.setColor(Color.BLACK);
+            g.drawString(String.format("Position: (%.2f, %.2f)", dpp.x(), dpp.y()), -getWidth() / 2.0f + 10 - offsetX, -getHeight() / 2.0f + 20 - offsetY);
+            g.drawString(String.format("Yaw: %.2f°", dpp.yaw()), -getWidth() / 2.0f + 10 - offsetX, -getHeight() / 2.0f + 40 - offsetY);
+            g.drawString(String.format("Target Yaw: %.2f°", dpp.t_yaw()), -getWidth() / 2.0f - offsetX + 10, -getHeight() / 2.0f + 60 - offsetY);
+            g.drawString(String.format("Zoom: %.1f", zoom), -getWidth() / 2.0f - offsetX + 10, -getHeight() / 2.0f + 80 - offsetY);
 
-            int pt_x = Math.round(dpp.t_x() * zoom);
-            int pt_y = Math.round(dpp.t_y() * zoom);
+            g.scale(zoom, -zoom); // Y-up
+
+            int px = Math.round(dpp.x());
+            int py = Math.round(dpp.y());
+
+            int pt_x = Math.round(dpp.t_x());
+            int pt_y = Math.round(dpp.t_y());
 
             // Target
             g.setColor(Color.GRAY);
-            g.fillOval(pt_x-3, pt_y-3, 6, 6);
+            g.fillOval(pt_x - 3, pt_y - 3, 6, 6);
 
             // Position dot
             g.setColor(Color.BLUE);
             g.fillOval(px - 5, py - 5, 10, 10);
+
+            g.setColor(Color.ORANGE);
+
+            ArrayList<Pos> cln;
+            synchronized (maps) {
+                cln = new ArrayList<>(maps);
+            }
+            for (var pos : cln) {
+                g.fillOval((int) (pos.x - 1), (int) (pos.y - 2), 2, 2);
+            }
 
             // Yaw direction
             {
@@ -176,14 +208,6 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
             // Line to origin
             g.setColor(Color.GREEN.darker());
             g.drawLine(pt_x, pt_y, px, py);
-
-            // Flip back to draw text
-            g.scale(1, -1);
-            g.setColor(Color.BLACK);
-            g.drawString(String.format("Position: (%.2f, %.2f)", dpp.x(), dpp.y()), -getWidth() / 2 + 10, -getHeight() / 2 + 20);
-            g.drawString(String.format("Yaw: %.2f°", dpp.yaw()), -getWidth() / 2 + 10, -getHeight() / 2 + 40);
-            g.drawString(String.format("Target Yaw: %.2f°", dpp.t_yaw()), -getWidth() / 2 + 10, -getHeight() / 2 + 60);
-            g.drawString(String.format("Zoom: %.1f", zoom), -getWidth() / 2 + 10, -getHeight() / 2 + 80);
         }
     }
 }

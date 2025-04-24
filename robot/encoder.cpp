@@ -62,19 +62,36 @@ void updateEncoder(){
 
   float displacement = (d_left + d_right)/2;
   float oldAng = odom.angle;
-  odom.angle += (d_left-d_right)/(WHEEL_DISTANCE);
+  odom.angle += (d_right-d_left)/(WHEEL_DISTANCE);
   float ang = (odom.angle+oldAng)/2;
+  currentYaw=odom.angle*180/M_PI;
 
   float dispx = desiredPos.x-odom.x;
   float dispy = desiredPos.y-odom.y;
   posInput = sqrt(dispx*dispx+dispy*dispy);
 
   desiredYaw = atan2(dispy, dispx)*180/PI;
-  if(abs(fmod(currentYaw-desiredYaw, 180.0))>90){
-    desiredYaw = fmod(desiredYaw+180.0, 360.0);
+  desiredYaw = fmod(desiredYaw+360, 360);
+  currentYaw = fmod(fmod(currentYaw, 360)+360, 360);
+
+  double yd = desiredYaw-currentYaw;
+  if (yd >= 180) 
+    yd -= 360;
+  else if (yd <= -180) 
+    yd += 360;
+
+  //display
+  desiredYaw = currentYaw+yd;
+  turnInput = yd;
+  if (abs(yd) > 90) {
+    turnInput = fmod((yd<0?1:-1)*180+yd, 180);
     posInput = -posInput;
+    
+    //display
+    desiredYaw += 180;
   }
-//  Serial.println(desiredYaw);
+  
+  posInput *= cos(turnInput*PI/180);
   
   odom.x += (float)(cos(ang)*displacement);
   odom.y += (float)(sin(ang)*displacement);

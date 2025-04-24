@@ -6,9 +6,9 @@
 //double turnKp=2, turnKi=0.0, turnKd=0.0;
 
 
-double angKp=4.0, angKi=106.75, angKd=0.0472;
-double posKp=0.96, posKi=1.28, posKd=1.0;
-double turnKp=1, turnKi=5.0, turnKd=0.17;
+double angKp=4, angKi=60.0, angKd=0.0958;
+double posKp=0.5, posKi=0.0, posKd=0.5;
+double turnKp=1.25, turnKi=3.0, turnKd=0.0;
 
 
 double angleInput, angleOutput, angleSetpoint;
@@ -18,7 +18,7 @@ double posInput, posOutput, posSetpoint;
 PID posPID(&posInput, &posOutput, &posSetpoint, posKp, posKi, posKd, P_ON_E, DIRECT);
 
 double turnInput, turnOutput, turnSetpoint;
-PID turnPID(&turnInput, &turnOutput, &turnSetpoint, turnKp, turnKi, turnKd, P_ON_M, DIRECT);
+PID turnPID(&turnInput, &turnOutput, &turnSetpoint, turnKp, turnKi, turnKd, P_ON_E, DIRECT);
 
 PID* pids[PID_ARR_COUNT] = {&anglePID, &posPID, &turnPID};
 
@@ -46,10 +46,9 @@ Speeds updatePID(){
   angleSetpoint = posOutput;
   anglePID.Compute();
 
+  turnSetpoint = 0;
   float maxTurn = max(0.0f, 25.0f-abs((float)angleOutput));
   turnPID.SetOutputLimits(-maxTurn, maxTurn);
-  turnSetpoint = 0;
-  turnInput = fmod(currentYaw-desiredYaw, 180);
   turnPID.Compute();
 
   Speeds speeds;
