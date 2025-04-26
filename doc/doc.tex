@@ -1,50 +1,106 @@
-\documentclass[conference]{IEEEtran}
-\IEEEoverridecommandlockouts
+\documentclass[12pt]{article}
+
 
 \usepackage[pdftex,pdfpagelabels,bookmarks,hyperindex,hyperfigures]{hyperref}
 
 
-
+\usepackage[margin=1in]{geometry}
 \usepackage{float}
 \usepackage{adjustbox}
 \usepackage[table]{xcolor}
 \usepackage{cite}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,
-                matrix,
-                positioning}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
-\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
-    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
-% \usepackage[margin=0.25in]{geometry}
-% \usepackage{geometry}
 \usepackage{pgfplots}
-\pgfplotsset{compat=1.9}
-% \pgfplotsset{width=7cm,height=5cm,compat=newest}
+\usepackage{fancyhdr}
+
+\setlength{\parskip}{1em} % Add spacing between paragraphs
+\setlength{\parindent}{0em} % Remove indentation at the start of paragraphs
+
+
+\pagestyle{fancy}
+\fancyhf{} % Clear all headers/footers
+\lhead{Bobot}
+\rfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% --- Title and TOC ---
 
 \begin{document}
 
-\title{4P78 Project Documentation\\}
-
+\title{4P78 Project Documentation}
 \author{
-    \IEEEauthorblockN{Parker TenBroeck 7376726}
+    Parker TenBroeck 7376726\\
     pt21zs@brocku.ca
     \and
-    \IEEEauthorblockN{Brett}
+    Brett \\
     brett@brocku.ca
 }
-\maketitle
+\date{\today}
+
+\makeatletter
+\begin{titlepage}
+	\def \LOGOPATH {brock.jpg} % Path to Brock logo
+	\def \UNIVERSITY {Brock University}
+	\def \FACULTY {Faculty of Mathematics \& Science}
+	\def \DEPARTMENT {Department of Computer Science}
+	\def \COURSETITLE {COSC 4P78: Robotics}
+	\def \SUPERVISOR {Earl Foxwell}
+	
+	
+	\vfill
+	\begin{center}
+		\includegraphics[width=0.6\textwidth]{brock.jpg}
+		\fontsize{14pt}{14pt}\selectfont
+		\vfill
+		\UNIVERSITY \\
+		\FACULTY \\
+		\DEPARTMENT \\
+		\vfill
+		\fontsize{18pt}{18pt}\selectfont
+		\textbf{\COURSETITLE} \\[0.5cm]
+		\textbf{\@title}
+		\vfill
+		\fontsize{14pt}{14pt}\selectfont
+		Prepared By: \\[0.5cm]
+		
+		\begin{tabular}[t]{c}
+			\@author
+		\end{tabular}\par
+	
+	    \vfill
+		Instructor: \\
+		\SUPERVISOR
+		\vfill
+		\@date
+	\end{center}
+\end{titlepage}
+\makeatother
+
+\tableofcontents
+\newpage
 
 \section{Introduction}
-meow
+What if you wanted to make a robot to map out a room but you only had two wheels and two motors at your disposal? Well we have the perfect solution for you! Introducing the Bobot, a two wheeled robot which is more of a circus act than useful. \\
+With only two wheels its purely dynamically stable, will fall over due to its own stupidity but its very cute while it does so! This little guy can wiz around at the speed of a snail your house and (poorly) map out a room to your hearts desire
 
 \section{Instructions}
+
+
 \section{Problem Set}
+
+\subsection{Keeping Upright}
+\subsection{Keeping A Position}
+\subsection{Communication}
+
 \section{Approaches}
+
+
+
 \section{Challanages}
 
 \subsection{Balancing}
@@ -57,8 +113,16 @@ Because the robot is in constant motion keeping itself balanced without a "push"
 \subsection{Efficient Communication}
 Since we have limited processing power and time per loop iteration we need to be smart in how we receive and transmit data to our mapping software. For this reason we designed a stateless UDP based network protocol overtop the esp8266 Wifi \& UDP libraries. \cite{wifi_lib}
 
-\section{External Tools}
-GhatGPT was used in the making of the java swing UI
+\section{Resources Used}
+\begin{itemize}
+	\item ESP8266 core libraries to note the Wifi and UDP libraries. \cite{wifi_lib}
+	\item \texttt{PID\_V1} The PID library of choice. \cite{pid_lib}
+	\item Adafruit VL53L0X was used the library used to interface with the time of flight sensor used for mapping. \cite{dist_lib}
+	\item The AS5600 library was used to interface with the AS5600 magnetic encoders on each wheel. \cite{enc_lib}
+	\item The MPU6050 library was used to interface and interpret the accelerometer and gyroscope data. \cite{gyro_lib}. It required modification to work with our hardware as it was a knockoff and the device ID was different than what it was expecting.
+	\item A blog by the author of the PID library used was very helpful when tuning and configuring the PID controls in the robot. \cite{pid_help}
+\end{itemize}
+
 
 \nocite{*}
 \bibliographystyle{IEEEtran}
