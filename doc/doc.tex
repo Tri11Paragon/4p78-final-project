@@ -46,7 +46,19 @@ meow
 \section{Problem Set}
 \section{Approaches}
 \section{Challanages}
+
+\subsection{Balancing}
+Obviously a robot which stays upright and only has two wheels 
+\subsection{Odometry}
+Keeping track of our position and angle was another challange that required careful consideration. Because the system is so dynamic and in constant motion we needed a system which could account for the constant movement to maintain a stable state.
+\subsection{Target Positions}
+Because the robot is in constant motion keeping itself balanced without a "push" towards a single position it will drift around. To solve this we use the odometry system as a input to the movement system. By setting the desired heading of the robot to the vector from its position to the target position, and by biasing the direction the robot will travel to be the direction to the target position we get a crude way of staying in a single position.
+
+\subsection{Efficient Communication}
+Since we have limited processing power and time per loop iteration we need to be smart in how we receive and transmit data to our mapping software. For this reason we designed a stateless UDP based network protocol overtop the esp8266 Wifi \& UDP libraries. \cite{wifi_lib}
+
 \section{External Tools}
+GhatGPT was used in the making of the java swing UI
 
 \nocite{*}
 \bibliographystyle{IEEEtran}
