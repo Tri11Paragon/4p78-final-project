@@ -6,233 +6,71 @@
 WiFiUDP Udp;
 unsigned int localUdpPort = 42069; 
 
-
-#ifdef DO_WEB_SERVER
-
-#include <ESPAsyncTCP.h>
-#include <ESPAsyncWebServer.h>
-#include <ArduinoJson.h>
-#include <AsyncJson.h>
-#include <AsyncMessagePack.h>
-
-#include "page_html.h"
-
-AsyncWebServer server(80);
-
-
-void initWebServer(){
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send_P(200, "text/html", index_html);
-  });
-  server.on("/get_stuff_bin", HTTP_GET, [](AsyncWebServerRequest *request){
-    static float arr[4];
-    arr[0] = odom.angle;
-    arr[1] = distanceReading;
-    arr[2] = odom.x;
-    arr[3] = odom.y;
-    request->send(200, "application/octet-stream", (uint8_t*)(const char*)arr, sizeof(arr));
-  });
-  server.on("/fuckyou", HTTP_GET, [](AsyncWebServerRequest *request){
-    float arr[] = {
-      odom.angle,
-      distanceReading,
-      odom.x,
-      odom.y
-    };
-    request->send(200, "application/text", "hello");
-  });
-  server.on("/zero", HTTP_GET, [](AsyncWebServerRequest *request){
-    zeroOdom();
-    request->send(200);
-  });
-  server.on("/get_stuff", HTTP_GET, [](AsyncWebServerRequest *request){
-    char buff[1024];
-    int ret = snprintf(buff, sizeof(buff), 
-      R"({
-        "motorTargetAngle": %f,
-        "distanceReading": %f,
-        "position": %f,
-        "anglePID": {"setpoint": %lf, "input": %lf, "output": %lf},
-        "posPID": {"setpoint": %lf, "input": %lf, "output": %lf},
-        "turnPID": {"setpoint": %lf, "input": %lf, "output": %lf},
-        "odom": {"left": %f, "right": %f, "x": %f, "y": %f, "angle": %f},
-        "ypr": {"yaw": %f, "pitch": %f, "roll": %f},
-        "euler": {"psi": %f, "theta": %f, "phi": %f},
-        "gravity": {"x": %f, "y": %f, "z": %f},
-        "q": {"w": %f, "x": %f, "y": %f, "z": %f},
-        "aa": {"x": %hd, "y": %hd, "z": %hd},
-        "gy": {"x": %hd, "y": %hd, "z": %hd},
-        "aaReal": {"x": %hd, "y": %hd, "z": %hd},
-        "aaWorld": {"x": %hd, "y": %hd, "z": %hd}
-      })",
-      (float)dbgState.motorTargetAngle, 
-      (float)distanceReading,
-      0.0, //encoder.position(),
-      angleSetpoint, angleInput, angleOutput,
-      posSetpoint, posInput, posOutput,
-      turnSetpoint, turnInput, turnOutput,
-      odom.left, odom.right, odom.x, odom.y, odom.angle*180/M_PI,
-      ypr[0]*180/M_PI, ypr[1]*180/M_PI, ypr[2]*180/M_PI, 
-      euler[0]*180/M_PI, euler[1]*180/M_PI, euler[2]*180/M_PI, 
-      gravity.x, gravity.y, gravity.z,
-      q.w, q.x, q.y, q.z,
-      aa.x, aa.y, aa.z,
-      gy.x, gy.y, gy.z,
-      aaReal.x, aaReal.y, aaReal.z,
-      aaWorld.x, aaWorld.y, aaWorld.z
-    );
-    request->send(200, "application/json", buff);
-  });
-  server.on("/get_pid", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
-  [](AsyncWebServerRequest *request, uint8_t *bodyData, size_t bodyLen, size_t index, size_t total) {
-    StaticJsonDocument<256> json;
-    deserializeJson(json, &bodyData[index], bodyLen);
-    int idx = json["index"];
-    if(idx>3){
-      request->send(400);
-      return;
-    }
-    PID& pid = *pids[idx];
-    char buff[256];
-    int ret = snprintf(buff, sizeof(buff), 
-      R"({"kp": %lf, "ki": %lf, "kd": %lf, "direction": %d})",
-      pid.GetKp(), pid.GetKi(), pid.GetKd(), pid.GetDirection()
-    );
-    request->send(200, "application/json", buff);
-  });
-
-  server.on("/set_desired_pos", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
-  [](AsyncWebServerRequest *request, uint8_t *bodyData, size_t bodyLen, size_t index, size_t total) {
-    StaticJsonDocument<256> json;
-    deserializeJson(json, &bodyData[index], bodyLen);
-    desiredPos.x = json["x"];
-    desiredPos.y = json["y"];
-    
-    request->send(200);
-  });
-  
-  server.on("/set_pid", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
-  [](AsyncWebServerRequest *request, uint8_t *bodyData, size_t bodyLen, size_t index, size_t total) {
-    StaticJsonDocument<256> json;
-    deserializeJson(json, &bodyData[index], bodyLen);
-    int idx = json["index"];
-    if(idx>3){
-      request->send(400);
-      return;
-    }
-
-    PID& pid = *pids[idx];
-    if(json.containsKey("kp"))
-      pid.SetTunings(json["kp"], json["ki"], json["kd"]);
-    if(json.containsKey("direction"))
-      pid.SetControllerDirection(json["direction"]);
-      
-    request->send(200);
-  });
-
-   server.on("/set_desired_yaw", HTTP_POST, [](AsyncWebServerRequest *request){}, NULL,
-    [](AsyncWebServerRequest *request, uint8_t *bodyData, size_t bodyLen, size_t index, size_t total) {
-      StaticJsonDocument<256> json;
-      deserializeJson(json, &bodyData[index], bodyLen);
-      desiredYaw = json["yaw"];
-      Serial.print(desiredYaw);
-      request->send(200);
-   });
-  server.begin();
-}
-
-#endif 
-
 void initServer(){
-  #ifdef DO_WEB_SERVER
-  initWebServer()
-  #endif 
-  
   Udp.begin(localUdpPort);
 }
 
-struct ZeroPacket{
-  static constexpr uint32_t ID = 0;
-};
-struct GetDataPacket{
-  static constexpr uint32_t ID = 1;
-};
-struct SetTargetPacket{
-  static constexpr uint32_t ID = 2;
-  FVec2 pos;
-};
-struct EverythingPacket{
-  static constexpr uint32_t ID = 3;
-};
-struct GetDataPacketPlus{
-  static constexpr uint32_t ID = 4;
-};
-struct GetPIDPacket{
-  static constexpr uint32_t ID = 5;
-  uint32_t index;
-};
-struct SetPIDPacket{
-  static constexpr uint32_t ID = 6;
-  uint32_t index;
-  float kp,ki,kd;
-  uint32_t direction;
-};
-
-struct Packet{
-  uint32_t sequence;
-  uint32_t id;
-  union{
-    ZeroPacket zero;
-    GetDataPacket get_data;
-    SetTargetPacket set_target;
-    EverythingPacket everything;
-    GetDataPacketPlus get_data_plus;
-    GetPIDPacket get_pid_packet;
-    SetPIDPacket set_pid_packet;
-  } data;
-};
-
-struct DataPacket{
+// ---------------- response packets
+struct DataPacketResponse{
     float yaw;
     float distance;
     FVec2 position;
 };
 
 
-struct DataPacketPlus{
+struct DataPlusPacketResponse{
     float yaw;
     float desiredYaw;
     float distance;
     FVec2 position;
     FVec2 targetPosition;
 };
+// ---------------- response packets
 
-void respond_data_packet(){
-    DataPacket dp;
+struct ZeroPacket{
+  static constexpr uint32_t ID = 0;
+
+  void handle(){
+    Udp.write((const char*)&ID, sizeof(ID));
+    zeroOdom(); 
+    desiredPos.x = 0; 
+    desiredPos.y = 0; 
+  }
+};
+struct GetDataPacket{
+  static constexpr uint32_t ID = 1;
+  
+  void handle(){
+    Udp.write((const char*)&ID, sizeof(ID));
+
+    DataPacketResponse dp;
     dp.yaw = currentYaw;
     dp.distance = distanceReading;
     dp.position.x = odom.x;
     dp.position.y = odom.y;
     
     Udp.write((const char*)&dp, sizeof(dp));
-}
+  }
+};
+struct SetTargetPacket{
+  static constexpr uint32_t ID = 2;
+  FVec2 pos;
+  
+  void handle(){
+    desiredPos.x = this->pos.x; 
+    desiredPos.y = this->pos.y; 
+        
+    Udp.write((const char*)&ID, sizeof(ID));
+  }
+};
+struct EverythingPacket{
+  static constexpr uint32_t ID = 3;
 
-void respond_data_packet_plus(){
-    DataPacketPlus dp;
-    dp.yaw = currentYaw;
-    dp.desiredYaw = desiredYaw;
-    dp.distance = distanceReading;
-    dp.position.x = odom.x;
-    dp.position.y = odom.y;
-    dp.targetPosition.x = desiredPos.x;
-    dp.targetPosition.y = desiredPos.y;
-    
-    Udp.write((const char*)&dp, sizeof(dp));
-}
+  void handle(){
+    Udp.write((const char*)&ID, sizeof(ID));
 
-void respond_everything_packet(){
     float everything[] = {
-       (float)dbgState.motorTargetAngle, 
+      (float)dbgState.motorTargetAngle, 
       (float)distanceReading,
       0.0, //encoder.position(),
       angleSetpoint, angleInput, angleOutput,
@@ -250,32 +88,82 @@ void respond_everything_packet(){
     };
     
     Udp.write((const char*)everything, sizeof(everything));
-}
-
-void set_pid(SetPIDPacket spid){
-  if(spid.index>PID_ARR_COUNT){
-    return;
   }
-  
-  PID& pid = *pids[spid.index];
-  pid.SetTunings(spid.kp, spid.ki, spid.kd);
-  pid.SetControllerDirection(spid.direction);
-}
+};
+struct GetDataPlusPacket{
+  static constexpr uint32_t ID = 4;
 
-void get_pid(GetPIDPacket gpid){
-  if(gpid.index>PID_ARR_COUNT){
-    return;
+  void handle(){
+    Udp.write((const char*)&ID, sizeof(ID));
+
+    DataPlusPacketResponse dp;
+    dp.yaw = currentYaw;
+    dp.desiredYaw = desiredYaw;
+    dp.distance = distanceReading;
+    dp.position.x = odom.x;
+    dp.position.y = odom.y;
+    dp.targetPosition.x = desiredPos.x;
+    dp.targetPosition.y = desiredPos.y;
+    
+    Udp.write((const char*)&dp, sizeof(dp));
   }
-  PID& pid = *pids[gpid.index];
-  struct {float kp,ki,kd; uint32_t direction;} pidData = {
-    .kp=pid.GetKp(),
-    .ki=pid.GetKi(),
-    .kd=pid.GetKd(),
-    .direction=pid.GetDirection()
-  };
-  
-  Udp.write((const char*)&pidData, sizeof(pidData));
-}
+};
+struct GetPIDPacket{
+  static constexpr uint32_t ID = 5;
+  uint32_t index;
+
+  void handle(){
+    if(this->index>PID_ARR_COUNT){
+      uint32_t e = -1;
+      Udp.write((const char*)&e, sizeof(e));
+      return;
+    }
+    
+    Udp.write((const char*)&ID, sizeof(ID));
+    PID& pid = *pids[this->index];
+    struct {float kp,ki,kd; uint32_t direction;} pidData = {
+      .kp=pid.GetKp(),
+      .ki=pid.GetKi(),
+      .kd=pid.GetKd(),
+      .direction=pid.GetDirection()
+    };
+    
+    Udp.write((const char*)&pidData, sizeof(pidData));
+  }
+};
+struct SetPIDPacket{
+  static constexpr uint32_t ID = 6;
+  uint32_t index;
+  float kp,ki,kd;
+  uint32_t direction;
+
+  void handle(){
+    if(this->index>PID_ARR_COUNT){
+      uint32_t e = -1;
+      Udp.write((const char*)&e, sizeof(e));
+      return;
+    }
+    Udp.write((const char*)&ID, sizeof(ID));
+    
+    PID& pid = *pids[this->index];
+    pid.SetTunings(this->kp, this->ki, this->kd);
+    pid.SetControllerDirection(this->direction);
+  }
+};
+
+struct Packet{
+  uint32_t sequence;
+  uint32_t id;
+  union{
+    ZeroPacket zero;
+    GetDataPacket get_data;
+    SetTargetPacket set_target;
+    EverythingPacket everything;
+    GetDataPlusPacket get_data_plus;
+    GetPIDPacket get_pid_packet;
+    SetPIDPacket set_pid_packet;
+  } kind;
+};
 
 bool handleUDP(){
   int size = Udp.parsePacket();
@@ -290,33 +178,15 @@ bool handleUDP(){
 
     Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
     Udp.write((const char*)&packet->sequence, sizeof(packet->sequence));
-    Udp.write((const char*)&packet->id, sizeof(packet->id));
 
     switch(packet->id){
-      case ZeroPacket::ID: 
-        zeroOdom(); 
-        desiredPos.x = 0; 
-        desiredPos.y = 0; 
-        break;  
-      case GetDataPacket::ID: 
-        respond_data_packet(); 
-        break;  
-      case SetTargetPacket::ID: 
-        desiredPos.x = packet->data.set_target.pos.x; 
-        desiredPos.y = packet->data.set_target.pos.y; 
-        break;  
-      case EverythingPacket::ID: 
-        respond_everything_packet(); 
-        break;
-      case GetDataPacketPlus::ID: 
-        respond_data_packet_plus(); 
-        break;   
-      case SetPIDPacket::ID:
-        set_pid(packet->data.set_pid_packet);
-        break;
-      case GetPIDPacket::ID:
-        get_pid(packet->data.get_pid_packet);
-        break;
+      case ZeroPacket::ID: packet->kind.zero.handle();break;  
+      case GetDataPacket::ID: packet->kind.get_data.handle();break;
+      case SetTargetPacket::ID: packet->kind.set_target.handle();break;
+      case EverythingPacket::ID: packet->kind.everything.handle();break;
+      case GetDataPlusPacket::ID: packet->kind.get_data_plus.handle();break;
+      case SetPIDPacket::ID: packet->kind.set_pid_packet.handle();break;
+      case GetPIDPacket::ID: packet->kind.get_pid_packet.handle();break;
     }
     Udp.endPacket();
     return true;

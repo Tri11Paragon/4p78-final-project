@@ -1,5 +1,5 @@
 #include "headers.h"
-#define PWM_FREQ 400
+#define PWM_FREQ 450
 
 void wire1(){
   Wire1.begin(SDA, SCL);
@@ -54,6 +54,10 @@ void setup() {
   initGyro();  
 }
 
+float mapfloat(float x, float in_min, float in_max, float out_min, float out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 void loop() {
   long start = millis();
   
@@ -81,14 +85,11 @@ void loop() {
   
   long pid = millis();
 
-  speeds.left = min(90.0f-10, max(-90.0f+10, speeds.left));
-  speeds.right = min(90.0f-10, max(-90.0f+10, speeds.right));
-
   const int MAX_FOR = (int)(0.0010/(1.0/PWM_FREQ)*255);
   const int MAX_REV = (int)(0.0020/(1.0/PWM_FREQ)*255);
 
-  analogWrite(D3, map((int)speeds.left, 90-10, -90+10, MAX_REV, MAX_FOR));
-  analogWrite(D4, map((int)speeds.right, 90-10, -90+10, MAX_REV, MAX_FOR));
+  analogWrite(D3, mapfloat(speeds.left, -1, 1, MAX_FOR, MAX_REV));
+  analogWrite(D4, mapfloat(speeds.right, -1, 1, MAX_FOR, MAX_REV));
 
   long end = millis();
   

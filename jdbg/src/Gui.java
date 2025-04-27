@@ -4,6 +4,8 @@ import java.awt.event.*;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
     private VisualPanel visualPanel;
@@ -48,12 +50,11 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
 
         new Thread(() -> {
             while(true){
-                try{
-                    visualPanel.updateData(robot.getDataPlus().await(1000));
-                    Thread.sleep(20);
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
+             try{
+                 visualPanel.updateData(robot.getDataPlus().await(1000));
+             }catch (Exception e){
+                 e.printStackTrace();
+             }
             }
         }).start();
 

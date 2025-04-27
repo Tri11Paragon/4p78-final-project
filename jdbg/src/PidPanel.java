@@ -9,8 +9,8 @@ public class PidPanel extends JPanel {
         String[] pidNames = {"angle", "pos", "turn"};
         JComboBox<String> indexDropdown = new JComboBox<>(pidNames);
 
-        JSlider kpSlider = new JSlider(0, (int)(SCALE*10), 0);
-        JSlider kiSlider = new JSlider(0, (int)(SCALE*150), 0);
+        JSlider kpSlider = new JSlider(0, (int)(SCALE*1), 0);
+        JSlider kiSlider = new JSlider(0, (int)(SCALE*1), 0);
         JSlider kdSlider = new JSlider(0, (int)(SCALE*2), 0);
 
         JLabel kpValue = new JLabel("0.00");

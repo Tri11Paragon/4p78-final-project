@@ -19,5 +19,7 @@ void updateDistance(){
 //    if(distanceReading>2000){
 //      distanceReading = (float)NAN;
 //    }
+  }else{
+    distanceReading = 8000;
   }
 }

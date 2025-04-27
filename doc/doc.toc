@@ -1,13 +1,18 @@
 \contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
 \contentsline {section}{\numberline {2}Instructions}{2}{section.2}%
 \contentsline {section}{\numberline {3}Problem Set}{2}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Keeping Upright}{2}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Keeping A Position}{2}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Communication}{2}{subsection.3.3}%
-\contentsline {section}{\numberline {4}Approaches}{2}{section.4}%
-\contentsline {section}{\numberline {5}Challanages}{2}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Balancing}{2}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Odometry}{2}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Target Positions}{3}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Efficient Communication}{3}{subsection.5.4}%
-\contentsline {section}{\numberline {6}Resources Used}{3}{section.6}%
+\contentsline {subsection}{\numberline {3.1}Balancing}{2}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Odometry}{2}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Target Positions}{3}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Communication}{3}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Approaches}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Balancing}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Odometry}{3}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Target Positions}{3}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Communication}{3}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Challanages}{3}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Balancing}{3}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Odometry}{4}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Target Positions}{4}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Communication}{4}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Resources Used}{4}{section.6}%
