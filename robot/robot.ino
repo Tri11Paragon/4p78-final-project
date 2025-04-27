@@ -17,8 +17,6 @@ float currentYaw = 0.0;
 
 FVec2 desiredPos;
 
-DebugState dbgState;
-
 void initSerial(){
   Serial.begin(115200);
   while (!Serial);

@@ -16,9 +16,6 @@ void initDistance(){
 void updateDistance(){
   if (lox.isRangeComplete()) {
     distanceReading = (float)lox.readRange();
-//    if(distanceReading>2000){
-//      distanceReading = (float)NAN;
-//    }
   }else{
     distanceReading = 8000;
   }

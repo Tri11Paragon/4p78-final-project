@@ -66,7 +66,7 @@ public class Gui extends JFrame  implements KeyListener, MouseWheelListener {
             int number = 500;
             for(int i = 0; i < number; i ++){
                 try {
-                    sum += robot.getEverything().await()[19-1];
+                    sum += robot.getEverything().await()[17-1];
                 } catch (Exception ex) {
                     throw new RuntimeException(ex);
                 }

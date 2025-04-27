@@ -70,9 +70,7 @@ struct EverythingPacket{
     Udp.write((const char*)&ID, sizeof(ID));
 
     float everything[] = {
-      (float)dbgState.motorTargetAngle, 
       (float)distanceReading,
-      0.0, //encoder.position(),
       angleSetpoint, angleInput, angleOutput,
       posSetpoint, posInput, posOutput,
       turnSetpoint, turnInput, turnOutput,

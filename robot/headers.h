@@ -32,12 +32,6 @@ extern float angleOffset;
 extern float desiredYaw;
 extern float currentYaw;
 
-struct DebugState{
-  int motorTargetAngle;
-};
-
-extern DebugState dbgState;
-
 //-------- wire
 #include <Wire.h>
 #define Wire1 Wire
