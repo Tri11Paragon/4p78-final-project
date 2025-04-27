@@ -16,6 +16,8 @@
 \usepackage{xcolor}
 \usepackage{pgfplots}
 \usepackage{fancyhdr}
+\usepackage{color}
+\usepackage{listings}
 
 \setlength{\parskip}{1em} % Add spacing between paragraphs
 \setlength{\parindent}{0em} % Remove indentation at the start of paragraphs
@@ -116,13 +118,70 @@ The only source of computation used is a single \texttt{ESP8266} microcontroller
 
 
 \subsection{Balancing}
-The balancing is done by
+The balancing is done by a single PID controller where the pitch of the robot is fed as the input to the controller and the output is $\pm1$ which represents motor speed forward/backwards
+
 \subsection{Odometry}
+The odometry system uses a simple arc length based system\\\\
+\begin{math}
+	b = \text{Distance between wheels}\\
+	\triangle R = \text{Delta distance of right wheel}\\
+	\triangle L = \text{Delta distance of left wheel}\\
+	\triangle D = \frac{\triangle R + \triangle L}{2}\\
+	\theta_n = \theta_{n-1} + \frac{\triangle R - \triangle L}{b}\\
+	\theta' = \frac{\theta_n + \theta_{n-1}}2\\
+	x_n = x_{n-1} + cos(\theta')\times \triangle D\\
+	y_n = y_{n-1} + sin(\theta')\times \triangle D\\
+\end{math}
+
 \subsection{Target Positions}
 The target position is acheived through the combination of two PID controllers. One is responsible for turn and simply adds motor speeds directly to the output of the balancing PID controller. One thing to note is the max turn speed is only 15\% of the max motor speed and decreases linearly as the angle goes to $\pm12^\circ$ to increase stability. The second PID controller is responsible for moving forward/backwards. It works by being the input to the balancing PID controller and setting the angle setpoint. it is bound to $\pm2^\circ$ and will bias the robot to move in one direction.\\
 These work together by calculating the heading and displacement needed from the robots current position to the target position and setting those values as the input to the aforementioned PID controllers.
 \subsection{Communication}
-Communication is done through a stateless but sequenced and tagged UDP 
+Communication is done through a stateless but sequenced and tagged UDP protocol. 
+
+
+\lstdefinelanguage{RustLike}{
+	sensitive,
+	morekeywords={struct, u32, f32, String, union},
+	morecomment=[l]{//},
+	morecomment=[s]{/*}{*/},
+%	
+	showspaces=false,
+	showtabs=false,
+	showstringspaces=true,
+%	   
+	commentstyle=\color{codegreen},
+	keywordstyle=\color[rgb]{0.75, 0, 0},
+	stringstyle=\color{codepurple},
+	backgroundcolor=\color[gray]{0.97},
+	rulecolor=\color[gray]{0.90},
+%	
+	numberstyle=\tiny,
+	basicstyle=\ttfamily\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,               
+	numbers=left,                    
+	numbersep=5pt,                   
+	tabsize=2
+}
+
+\begin{lstlisting}[language=RustLike]
+struct{
+	sequence: u32,
+	id: u32,
+	type: union{
+		zero: ZeroPacket,
+		get_data: GetDataPacket,
+		set_target: SetTargetPacket,
+		everything: EverythingPacket,
+		get_data_plus: GetDataPlusPacket,
+		get_pid: GetPIDPacket,
+		set_pid: SetPIDPacket,
+	}
+}
+\end{lstlisting}
+
+Each type has a unique associated ID, and also potentially associated with the packet. Each packet is responsible for responding. The response follows a similar style, The sequence value is always the same, the ID is typically the same but in special cases like errors can be some other value, and the data responded with is upto the packet. Even if response packets don't contain any data they are still sent.
 
 \section{Challanages}
 
