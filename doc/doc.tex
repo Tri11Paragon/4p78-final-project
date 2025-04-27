@@ -96,6 +96,9 @@ With only two wheels its purely dynamically stable, will fall over due to its ow
 	\item Once robot has booted let go and step away
 	\item Connect computer to network \texttt{MEOW}
 	\item launch vidualization and control software
+	\item Pan with WASD and zoom with scroll or +/-
+	\item Control by clicking on screen to set target position
+	\item use buttons/dropdowns to set/zero/get values from the robot
 \end{itemize}
 
 \section{Problem Set}
@@ -113,10 +116,13 @@ The only source of computation used is a single \texttt{ESP8266} microcontroller
 
 
 \subsection{Balancing}
+The balancing is done by
 \subsection{Odometry}
 \subsection{Target Positions}
-The target position 
+The target position is acheived through the combination of two PID controllers. One is responsible for turn and simply adds motor speeds directly to the output of the balancing PID controller. One thing to note is the max turn speed is only 15\% of the max motor speed and decreases linearly as the angle goes to $\pm12^\circ$ to increase stability. The second PID controller is responsible for moving forward/backwards. It works by being the input to the balancing PID controller and setting the angle setpoint. it is bound to $\pm2^\circ$ and will bias the robot to move in one direction.\\
+These work together by calculating the heading and displacement needed from the robots current position to the target position and setting those values as the input to the aforementioned PID controllers.
 \subsection{Communication}
+Communication is done through a stateless but sequenced and tagged UDP 
 
 \section{Challanages}
 
@@ -124,7 +130,7 @@ The target position
 Balancing took the longest out every task combined. It required research on not only PID control loops but also on different libraries and calibration requirements for our \texttt{MPU6050} gyroscope. These difficulties were compounded by the fact that we did not know which part/section would cause the robot to "randomly flail about and violently crash into the wall/floor". 
 
 \subsection{Odometry}
-We origionally didn't have encoders to keep track of our position and instead attempted to use the accelerometer to calculate displacement to save money on parts. This however, did not pan out. The first problem we ran into was our heading drifting. We knew it was going to be an issue after reading docs but tried a good old fassion "how bad could it possibly be" and oh boy did it drift fast. The second issue was "double integration over a noisy inaccurate signal" lead to our calculated position quickly exiting the stratosphere. These issues very quickly lead us to just get encoders.
+We origionally didn't have encoders to keep track of our position and instead attempted to use the accelerometer to calculate displacement/heading to save money on parts. This however, did not pan out. The first problem we ran into was our heading drifting. We knew it was going to be an issue after reading docs as the module does not have a magnetometer builtin. That aside we tried a good old fassion "how bad could it possibly be" and oh boy did it drift fast. The second issue was "double integration over a noisy inaccurate signal" lead to our calculated position quickly exiting the stratosphere. These issues very quickly lead us to just get encoders.
 
 \subsection{Target Positions}
 Using the bias towards a direction by setting the target angle was not the first approach we used. We originally directly added a movement speed to the motors like we do for turning. This however caused the robot to become unstable in certain situations. We eventually abandoned the approach in favor of the one used currently.
