@@ -39,8 +39,8 @@
     Parker TenBroeck 7376726\\
     pt21zs@brocku.ca
     \and
-    Brett \\
-    brett@brocku.ca
+    Brett Terpstra 6920201\\
+    bt19ex@brocku.ca
 }
 \date{\today}
 
@@ -83,12 +83,11 @@
 \end{titlepage}
 \makeatother
 
-\tableofcontents
 \newpage
 
 \section{Introduction}
-What if you wanted to make a robot to map out a room but you only had two wheels and two motors at your disposal? Well we have the perfect solution for you! Introducing the Bobot, a two wheeled robot which is more of a circus act than useful. \\
-With only two wheels its purely dynamically stable, will fall over due to its own stupidity but its very cute while it does so! This little guy can wiz around at the speed of a snail your house and (poorly) map out a room to your hearts desire
+What if you wanted to make a robot to map out a room but you only had two wheels and two motors at your disposal? Well, we have the perfect solution for you! Introducing the Bobot, a two-wheeled robot which is more of a circus act than useful. \\
+With only two wheels, it requires active stabilization, meaning it'll fall over due to its own stupidity if not tuned correctly - but it’s very cute while doing so! This little guy can whiz around your house at the speed of a snail and (poorly) map out a room to your heart’s content.
 
 \section{Instructions}
 \begin{itemize}
@@ -106,9 +105,9 @@ With only two wheels its purely dynamically stable, will fall over due to its ow
 \section{Problem Set}
 
 \subsection{Balancing}
-We have a vertical two wheeled robot I hope its fairly obvious when I say that it is only dynamically stable. This presents a challance because we need some system which keeps the system upright in a variaty of situations and responds dynamically to changes it cannot predict.
+We have a vertical two-wheeled robot, and I hope it's fairly obvious when I say that it is only dynamically stable, meaning it requires control systems that constantly read from several sensors to keep it not only upright, but also stationary. This presents a challenge, because we need a system that can maintain balance across a variety of situations, respond dynamically to unpredictable changes, and still be able to move through an environment based on user commands.
 \subsection{Odometry}
-Because we intend to map an area with the robot we need to know where we are. This issue is made slightly more challanging due to the fact we are in nearly constant motion keeping ourself upright.
+Because we intend to map an area with the robot we need to know where we are. This issue is made slightly more challenging due to the fact we are in nearly constant motion keeping ourself upright.
 \subsection{Target Positions}
 The problem of target positions like odometry is made more challenging due to the fact we are almost constantly in motion. We simply cannot "not move" when we are in the location we want to be as we'd fall over. This means the target position will need to be a "best effort" battle to keep in the same place as best as we can.
 \subsection{Communication}
@@ -134,7 +133,7 @@ The odometry system uses a simple arc length based system\\\\
 \end{math}
 
 \subsection{Target Positions}
-The target position is acheived through the combination of two PID controllers. One is responsible for turn and simply adds motor speeds directly to the output of the balancing PID controller. One thing to note is the max turn speed is only 15\% of the max motor speed and decreases linearly as the angle goes to $\pm12^\circ$ to increase stability. The second PID controller is responsible for moving forward/backwards. It works by being the input to the balancing PID controller and setting the angle setpoint. it is bound to $\pm2^\circ$ and will bias the robot to move in one direction.\\
+The target position is achieved through the combination of two PID controllers. One is responsible for turn and simply adds motor speeds directly to the output of the balancing PID controller. One thing to note is the max turn speed is only 15\% of the max motor speed and decreases linearly as the angle goes to $\pm12^\circ$ to increase stability. The second PID controller is responsible for moving forward/backwards. It works by being the input to the balancing PID controller and setting the angle set point. It is bound to $\pm2^\circ$ and will bias the robot to move in one direction.\\
 These work together by calculating the heading and displacement needed from the robots current position to the target position and setting those values as the input to the aforementioned PID controllers.
 \subsection{Communication}
 Communication is done through a stateless but sequenced and tagged UDP protocol. 
@@ -183,21 +182,21 @@ struct{
 
 Each type has a unique associated ID, and also potentially associated with the packet. Each packet is responsible for responding. The response follows a similar style, The sequence value is always the same, the ID is typically the same but in special cases like errors can be some other value, and the data responded with is upto the packet. Even if response packets don't contain any data they are still sent.
 
-\section{Challanages}
+\section{Challenges}
 
 \subsection{Balancing}
-Balancing took the longest out every task combined. It required research on not only PID control loops but also on different libraries and calibration requirements for our \texttt{MPU6050} gyroscope. These difficulties were compounded by the fact that we did not know which part/section would cause the robot to "randomly flail about and violently crash into the wall/floor". 
+Balancing took the longest out of every task combined. It required research on not only PID control loops but also on different libraries and calibration requirements for our \texttt{MPU6050} gyroscope. These difficulties were compounded by the fact that we did not know which part/section would cause the robot to "randomly flail about and violently crash into the wall/floor". 
 
 \subsection{Odometry}
-We origionally didn't have encoders to keep track of our position and instead attempted to use the accelerometer to calculate displacement/heading to save money on parts. This however, did not pan out. The first problem we ran into was our heading drifting. We knew it was going to be an issue after reading docs as the module does not have a magnetometer builtin. That aside we tried a good old fassion "how bad could it possibly be" and oh boy did it drift fast. The second issue was "double integration over a noisy inaccurate signal" lead to our calculated position quickly exiting the stratosphere. These issues very quickly lead us to just get encoders.
+We originally didn't have encoders to keep track of our position and instead attempted to use the accelerometer to calculate displacement/heading to save money on parts. This however, did not pan out. The first problem we ran into was our heading drifting. We knew it was going to be an issue after reading docs as the module does not have a magnetometer builtin. That aside we tried a good old fashion "how bad could it possibly be" and oh boy did it drift fast. The second issue was "double integration over a noisy inaccurate signal" lead to our calculated position quickly exiting the stratosphere. These issues very quickly lead us to just get encoders.
 
 \subsection{Target Positions}
 Using the bias towards a direction by setting the target angle was not the first approach we used. We originally directly added a movement speed to the motors like we do for turning. This however caused the robot to become unstable in certain situations. We eventually abandoned the approach in favor of the one used currently.
 
 \subsection{Communication}
-Since we have limited processing power/time per loop iteration we need to be smart in how we receive and transmit data to our mapping software. For this reason we designed a stateless UDP based network protocol overtop the esp8266 Wifi \& UDP libraries. \cite{wifi_lib}\\
+Since we have limited processing power/time per loop iteration we need to be smart in how we receive and transmit data to our mapping software. For this reason we designed a stateless UDP based network protocol over top the esp8266 Wifi \& UDP libraries. \cite{wifi_lib}\\
 
-We originally used a TCP+Webserver based library for this as it allowed us to use HTML+JS to display information but it continually had processing requirements the controller could not meet.
+We originally used a TCP + Web server based library for this as it allowed us to use HTML + JS to display information but it continually had processing requirements the controller could not meet.
 
 \section{Resources Used}
 \begin{itemize}
